@@ -57,8 +57,11 @@ exports.createNewTask = async (req, res) => {
   if (!uid) return;
 
   const { boardId, id } = req.params;
-  const { title, description, status } = req.body;
+  const { title, description } = req.body;
   const taskId = uuidv4();
+  const cardDoc = await db.collection("cards").doc(id).get();
+  const cardData = cardDoc.data();
+  const status = cardData.status;
 
   try {
     const newTask = {
@@ -68,7 +71,7 @@ exports.createNewTask = async (req, res) => {
       ownerId: uid,
       title,
       description,
-      status,
+      status: status,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 

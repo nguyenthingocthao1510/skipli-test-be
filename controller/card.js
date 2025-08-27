@@ -60,32 +60,18 @@ exports.getAllCardsByStatus = async (req, res) => {
     const snap = await db
       .collection("cards")
       .where("boardId", "==", boardId)
+      .where("status", "==", status)
       .get();
 
-    const cards = await Promise.all(
-      snap.docs.map(async (doc) => {
-        const data = doc.data();
-
-        const taskSnap = await db
-          .collection("tasks")
-          .where("cardId", "==", data.id)
-          .get();
-
-        const tasks = taskSnap.docs.map((taskDoc) => taskDoc.data());
-
-        return {
-          id: data.id,
-          name: data.name,
-          description: data.description,
-          list_member: data.list_member || [],
-          tasks: tasks.map((t) => ({
-            id: t.id,
-            title: t.title,
-            status: t.status,
-          })),
-        };
-      })
-    );
+    const cards = snap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        list_member: data.list_member || [],
+      };
+    });
 
     res.json(cards);
   } catch (err) {
@@ -99,13 +85,14 @@ exports.createNewCard = async (req, res) => {
   if (!uid) return;
 
   const { boardId } = req.params;
-  const { name, description, members } = req.body;
+  const { name, description, status, members } = req.body; // ✅ add 'members' from body
   const cardId = uuidv4();
 
   try {
     const ensuredMembers = members?.includes(uid)
       ? members
       : [...(members || []), uid];
+
     const newCard = {
       id: cardId,
       name,
@@ -113,6 +100,7 @@ exports.createNewCard = async (req, res) => {
       ownerId: uid,
       boardId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      status,
       list_member: ensuredMembers,
     };
 
@@ -148,6 +136,7 @@ exports.getCardDetails = async (req, res) => {
       id: data.id,
       name: data.name,
       description: data.description,
+      status: data.status,
     });
   } catch (err) {
     console.error("getCardDetails error:", err);
@@ -233,7 +222,9 @@ exports.inviteMemberToBoard = async (req, res) => {
   if (!uid) return;
 
   const { boardId } = req.params;
-  const { card_id, member_id, email_member } = req.body;
+  const { card_id, email_member } = req.body;
+  const userRecord = await admin.auth().getUserByEmail(email_member);
+  const memberId = userRecord.uid;
 
   try {
     const inviteId = uuidv4();
@@ -242,7 +233,7 @@ exports.inviteMemberToBoard = async (req, res) => {
       board_id: boardId,
       card_id: card_id || null,
       board_owner_id: uid,
-      member_id,
+      member_id: memberId,
       email_member: email_member || null,
       status: "pending",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),

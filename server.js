@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const authRoute = require("./routes/authRoutes");
 const boardsRouter = require("./routes/boards");
 const cardsRouter = require("./routes/card");
+const taskRouter = require("./routes/task");
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRoute);
 app.use("/api/auth/board", boardsRouter);
 app.use("/api/auth/card", cardsRouter);
+app.use("/api/auth/task", taskRouter);
 
 app.listen(PORT, () => {
   console.log("Server is running on port:", PORT);

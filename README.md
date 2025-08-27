@@ -2,6 +2,8 @@
 Best regards,
 ntnthao15102002@gmail.com
 
+## Link for deployment: https://skipli-test-be.onrender.com
+
 # Backend - Task Management App
 
 Node.js + Express backend for a task management app with boards, cards, member invitations, and Firebase integration.

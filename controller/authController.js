@@ -54,3 +54,28 @@ exports.getUser = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.getUsersByUids = async (req, res) => {
+  const { uids } = req.body;
+
+  if (!Array.isArray(uids)) {
+    return res.status(400).json({ message: "uids must be an array" });
+  }
+
+  try {
+    const userRecords = await Promise.all(
+      uids.map((uid) => admin.auth().getUser(uid))
+    );
+
+    const users = userRecords.map((user) => ({
+      uid: user.uid,
+      displayName: user.displayName || user.email || "Unnamed",
+      email: user.email,
+    }));
+
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("getUsersByUids error:", error);
+    res.status(500).json({ error: "Failed to fetch user details" });
+  }
+};

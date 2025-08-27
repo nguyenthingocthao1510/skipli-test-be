@@ -1,6 +1,6 @@
 ## Before we get started, I have something to confess: I use ChatGPT for the backend. My primary stack is Frontend Development, and I’m familiar with two frameworks: ReactJS and Angular. So, I do know a little bit about backend development. I understand this may need to be validated according to your guidelines, but I hope your company will understand my situation.
-## Best regards,
-## ntnthao15102002@gmail.com
+Best regards,
+ntnthao15102002@gmail.com
 
 # Backend - Task Management App
 

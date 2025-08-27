@@ -60,18 +60,32 @@ exports.getAllCardsByStatus = async (req, res) => {
     const snap = await db
       .collection("cards")
       .where("boardId", "==", boardId)
-      .where("status", "==", status)
       .get();
 
-    const cards = snap.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        list_member: data.list_member || [],
-      };
-    });
+    const cards = await Promise.all(
+      snap.docs.map(async (doc) => {
+        const data = doc.data();
+
+        const taskSnap = await db
+          .collection("tasks")
+          .where("cardId", "==", data.id)
+          .get();
+
+        const tasks = taskSnap.docs.map((taskDoc) => taskDoc.data());
+
+        return {
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          list_member: data.list_member || [],
+          tasks: tasks.map((t) => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+          })),
+        };
+      })
+    );
 
     res.json(cards);
   } catch (err) {
@@ -85,14 +99,13 @@ exports.createNewCard = async (req, res) => {
   if (!uid) return;
 
   const { boardId } = req.params;
-  const { name, description, status, members } = req.body; // ✅ add 'members' from body
+  const { name, description, members } = req.body;
   const cardId = uuidv4();
 
   try {
     const ensuredMembers = members?.includes(uid)
       ? members
-      : [...(members || []), uid]; // ✅ ensure owner is in list
-
+      : [...(members || []), uid];
     const newCard = {
       id: cardId,
       name,
@@ -100,7 +113,6 @@ exports.createNewCard = async (req, res) => {
       ownerId: uid,
       boardId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      status,
       list_member: ensuredMembers,
     };
 
@@ -263,7 +275,6 @@ exports.respondToCardInvite = async (req, res) => {
     }
 
     await ref.update({
-      status,
       respondedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
